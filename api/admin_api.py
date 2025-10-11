@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, List
 import logging
 import os
+import sqlalchemy as sa
 
 from services.model_manager import get_model_manager
 from services.model_storage import get_model_storage
@@ -137,58 +138,89 @@ async def reload_models(
         raise HTTPException(status_code=500, detail=f"Model reload failed: {str(e)}")
 
 
-@router.post("/run-migrations", dependencies=[])
-@limiter.limit("5/hour")
-async def run_migrations(
+@router.post("/start-collection", dependencies=[])
+@limiter.limit("10/hour")
+async def start_collection_service(
     request: Request,
     authorization: str = Header(None)
 ):
     """
-    Run database migrations
+    Start data collection service
 
     Authentication: Bearer token in Authorization header
 
     Example:
-        curl -X POST https://loving-purpose-production.up.railway.app/admin/run-migrations \\
+        curl -X POST https://loving-purpose-production.up.railway.app/api/v1/admin/start-collection \\
           -H "Authorization: Bearer $ADMIN_TOKEN"
     """
     verify_admin(authorization)
 
     try:
-        from alembic.config import Config
-        from alembic import command
+        from services.data_collector import start_data_collection
         from datetime import datetime
 
-        logger.info("🔄 Running database migrations...")
+        logger.info("🔄 Starting data collection service...")
 
-        # Get database URL from environment
-        database_url = os.getenv("DATABASE_URL")
-        if not database_url:
-            raise HTTPException(status_code=500, detail="DATABASE_URL not configured")
+        # Start the collection service
+        await start_data_collection()
 
-        # Fix postgres:// to postgresql://
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql://", 1)
-
-        # Create Alembic config
-        alembic_cfg = Config()
-        alembic_cfg.set_main_option("script_location", "database/migrations")
-        alembic_cfg.set_main_option("sqlalchemy.url", database_url)
-
-        # Run migrations
-        command.upgrade(alembic_cfg, "head")
-
-        logger.info("✅ Database migrations completed successfully")
+        logger.info("✅ Data collection service started successfully")
 
         return {
             "success": True,
-            "message": "Database migrations completed successfully",
+            "message": "Data collection service started successfully",
+            "started_at": datetime.utcnow().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to start collection service: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to start collection: {str(e)}")
+
+
+@router.post("/init-database", dependencies=[])
+@limiter.limit("5/hour")
+async def init_database(
+    request: Request,
+    authorization: str = Header(None)
+):
+    """
+    Initialize database (create all tables)
+
+    Authentication: Bearer token in Authorization header
+
+    Example:
+        curl -X POST https://loving-purpose-production.up.railway.app/api/v1/admin/init-database \\
+          -H "Authorization: Bearer $ADMIN_TOKEN"
+    """
+    verify_admin(authorization)
+
+    try:
+        from datetime import datetime
+        from database.database import get_database
+        from database.models import Base
+
+        logger.info("🔄 Initializing database schema...")
+
+        db = await get_database()
+
+        # Create all tables
+        async with db.engine.begin() as conn:
+            # Enable PostGIS
+            await conn.execute(sa.text("CREATE EXTENSION IF NOT EXISTS postgis"))
+            # Create all tables
+            await conn.run_sync(Base.metadata.create_all)
+
+        logger.info("✅ Database initialized successfully")
+
+        return {
+            "success": True,
+            "message": "Database initialized successfully",
             "completed_at": datetime.utcnow().isoformat()
         }
 
     except Exception as e:
-        logger.error(f"Migration failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Migration failed: {str(e)}")
+        logger.error(f"Database initialization failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Database initialization failed: {str(e)}")
 
 
 @router.get("/models/versions/{model_name}", dependencies=[])
