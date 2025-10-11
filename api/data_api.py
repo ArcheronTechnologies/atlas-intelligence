@@ -17,7 +17,7 @@ from api.rate_limits import limiter
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/data", tags=["Data API"])
+router = APIRouter(prefix="/data", tags=["Data API"])
 
 
 class IncidentResponse(BaseModel):
