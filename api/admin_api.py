@@ -137,6 +137,60 @@ async def reload_models(
         raise HTTPException(status_code=500, detail=f"Model reload failed: {str(e)}")
 
 
+@router.post("/run-migrations", dependencies=[])
+@limiter.limit("5/hour")
+async def run_migrations(
+    request: Request,
+    authorization: str = Header(None)
+):
+    """
+    Run database migrations
+
+    Authentication: Bearer token in Authorization header
+
+    Example:
+        curl -X POST https://loving-purpose-production.up.railway.app/admin/run-migrations \\
+          -H "Authorization: Bearer $ADMIN_TOKEN"
+    """
+    verify_admin(authorization)
+
+    try:
+        from alembic.config import Config
+        from alembic import command
+        from datetime import datetime
+
+        logger.info("🔄 Running database migrations...")
+
+        # Get database URL from environment
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            raise HTTPException(status_code=500, detail="DATABASE_URL not configured")
+
+        # Fix postgres:// to postgresql://
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+        # Create Alembic config
+        alembic_cfg = Config()
+        alembic_cfg.set_main_option("script_location", "database/migrations")
+        alembic_cfg.set_main_option("sqlalchemy.url", database_url)
+
+        # Run migrations
+        command.upgrade(alembic_cfg, "head")
+
+        logger.info("✅ Database migrations completed successfully")
+
+        return {
+            "success": True,
+            "message": "Database migrations completed successfully",
+            "completed_at": datetime.utcnow().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Migration failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Migration failed: {str(e)}")
+
+
 @router.get("/models/versions/{model_name}", dependencies=[])
 @limiter.limit("20/minute")
 async def list_model_versions(
