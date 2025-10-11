@@ -157,6 +157,35 @@ async def get_recent_incidents(
     )
 
 
+@router.post("/collection/trigger")
+@limiter.limit("10/hour")
+async def trigger_collection(request: Request):
+    """
+    Trigger immediate data collection (public endpoint for testing)
+
+    Collects incident data from polisen.se and stores it in the database.
+    """
+    try:
+        from services.data_collector import PolisenCollector
+
+        logger.info("🔄 Triggering data collection...")
+
+        collector = PolisenCollector()
+        result = await collector.collect()
+
+        logger.info(f"✅ Collection completed: {result}")
+
+        return {
+            "success": result.get("success", False),
+            "records_collected": result.get("records", 0),
+            "message": f"Collected {result.get('records', 0)} incidents from polisen.se",
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Collection trigger failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Collection failed: {str(e)}")
+
+
 @router.get("/collection/status")
 @limiter.limit("30/minute")
 async def get_collection_status(request: Request):
