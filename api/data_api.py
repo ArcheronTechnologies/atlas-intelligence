@@ -46,6 +46,7 @@ class IncidentsListResponse(BaseModel):
 @router.get("/incidents", response_model=IncidentsListResponse)
 @limiter.limit("100/minute")
 async def get_incidents(
+    request: Request,
     lat: Optional[float] = Query(None, description="Latitude for radius search"),
     lon: Optional[float] = Query(None, description="Longitude for radius search"),
     radius_km: Optional[float] = Query(None, description="Search radius in kilometers", ge=0.1, le=100),
@@ -139,6 +140,7 @@ async def get_incidents(
 @router.get("/incidents/recent", response_model=IncidentsListResponse)
 @limiter.limit("100/minute")
 async def get_recent_incidents(
+    request: Request,
     hours: int = Query(24, description="Get incidents from last N hours", ge=1, le=168),
     page_size: int = Query(100, ge=1, le=500)
 ):
@@ -148,6 +150,7 @@ async def get_recent_incidents(
     Returns incidents from the last N hours, most recent first.
     """
     return await get_incidents(
+        request=request,
         hours=hours,
         page=1,
         page_size=page_size
@@ -156,7 +159,7 @@ async def get_recent_incidents(
 
 @router.get("/collection/status")
 @limiter.limit("30/minute")
-async def get_collection_status():
+async def get_collection_status(request: Request):
     """
     Get data collection service status
 
