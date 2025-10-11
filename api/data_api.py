@@ -6,7 +6,7 @@ Serves incident data collected from Swedish sources to product APIs
 import logging
 from typing import List, Optional
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select, and_, or_
 from sqlalchemy.sql import func
