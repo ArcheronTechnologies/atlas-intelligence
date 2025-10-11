@@ -9,7 +9,7 @@ import httpx
 from typing import Dict
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import insert
-from geoalchemy2.elements import WKTElement
+from sqlalchemy import func
 
 from database.database import get_database
 from database.models import Incident
@@ -70,7 +70,6 @@ class PolisenCollector:
                             "location_name": event.get("location", {}).get("name", ""),
                             "latitude": latitude,
                             "longitude": longitude,
-                            "location": WKTElement(f'POINT({longitude} {latitude})', srid=4326),
                             "occurred_at": occurred_at,
                             "url": event.get("url", ""),
                             "severity": self._estimate_severity(event.get("type", "")),
@@ -78,7 +77,10 @@ class PolisenCollector:
                         }
 
                         # Upsert (insert or update on conflict)
-                        stmt = insert(Incident).values(**incident_data)
+                        stmt = insert(Incident).values(
+                            **incident_data,
+                            location=func.ST_SetSRID(func.ST_MakePoint(longitude, latitude), 4326)
+                        )
                         stmt = stmt.on_conflict_do_update(
                             index_elements=["external_id", "source"],
                             set_={
