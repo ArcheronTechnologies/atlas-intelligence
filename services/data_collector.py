@@ -90,16 +90,16 @@ class PolisenCollector:
                         stored_count += 1
 
                     except Exception as e:
-                        logger.error(f"Failed to process event {event.get('id')}: {e}")
+                        logger.error(f"Failed to process event {event.get('id')}: {e}", exc_info=True)
                         continue
 
                 await session.commit()
 
-            logger.info(f"✅ Collected {stored_count} incidents from Polisen.se")
-            return {"success": True, "records": stored_count}
+            logger.info(f"✅ Collected {stored_count} incidents from Polisen.se (fetched {len(events)} total)")
+            return {"success": True, "records": stored_count, "fetched": len(events)}
 
         except Exception as e:
-            logger.error(f"Failed to collect from Polisen.se: {e}")
+            logger.error(f"Failed to collect from Polisen.se: {e}", exc_info=True)
             return {"success": False, "error": str(e), "records": 0}
 
     def _estimate_severity(self, incident_type: str) -> int:
