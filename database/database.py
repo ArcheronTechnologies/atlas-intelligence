@@ -67,7 +67,7 @@ class AtlasDatabase:
 
         except Exception as e:
             logger.error("❌ Database initialization failed: %s", e)
-            raise
+            logger.warning("⚠️ Continuing without full initialization - use admin API to reset database")
 
     async def _ensure_postgis(self):
         """Ensure PostGIS extension is enabled"""
