@@ -30,7 +30,7 @@ class Incident(Base):
     # Geospatial
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
-    location = Column(Geography('POINT', srid=4326))
+    # location = Column(Geography('POINT', srid=4326))  # Disabled: PostGIS not available on Railway
 
     # Temporal
     occurred_at = Column(DateTime, nullable=False)

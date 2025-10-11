@@ -77,10 +77,7 @@ class PolisenCollector:
                         }
 
                         # Upsert (insert or update on conflict)
-                        stmt = insert(Incident).values(
-                            **incident_data,
-                            location=func.ST_SetSRID(func.ST_MakePoint(longitude, latitude), 4326)
-                        )
+                        stmt = insert(Incident).values(**incident_data)
                         stmt = stmt.on_conflict_do_update(
                             index_elements=["external_id", "source"],
                             set_={
