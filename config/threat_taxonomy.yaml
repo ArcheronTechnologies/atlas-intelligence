@@ -1,0 +1,212 @@
+# Atlas Intelligence - Unified Threat Taxonomy
+# Maps threat categories across Halo, Frontline AI, and SAIT_01
+
+violence:
+  description: "Physical violence or threat of violence"
+  severity_range: [3, 5]
+
+  halo_types:
+    - assault
+    - battery
+    - fight
+    - physical_altercation
+
+  frontline_objects:
+    - person
+    - weapon
+    - aggressive_behavior
+    - fighting
+
+  sait_codes:
+    - PHYSICAL_ALTERCATION
+    - DISTRESS_SCREAM
+    - VIOLENCE_SOUNDS
+
+  polisen_types:
+    - Misshandel
+    - Grov misshandel
+    - Våld mot tjänsteman
+
+weapons:
+  description: "Weapon possession, display, or use"
+  severity_range: [4, 5]
+
+  halo_types:
+    - weapon_possession
+    - armed_robbery
+    - weapons_offense
+
+  frontline_objects:
+    - gun
+    - knife
+    - weapon
+    - firearm
+
+  sait_codes:
+    - GUNSHOT
+    - WEAPON_DRAW
+    - EXPLOSION
+
+  polisen_types:
+    - Vapenbrott
+    - Skottlossning
+
+theft:
+  description: "Theft, burglary, or robbery"
+  severity_range: [2, 4]
+
+  halo_types:
+    - theft
+    - burglary
+    - robbery
+    - shoplifting
+
+  frontline_objects:
+    - suspicious_behavior
+    - fleeing
+    - bag_snatch
+
+  sait_codes:
+    - ALARM
+    - GLASS_BREAK
+    - FORCED_ENTRY
+
+  polisen_types:
+    - Stöld
+    - Rån
+    - Inbrott
+
+disturbance:
+  description: "Public disturbance or noise complaint"
+  severity_range: [1, 3]
+
+  halo_types:
+    - noise_complaint
+    - public_disturbance
+    - disorderly_conduct
+
+  frontline_objects:
+    - crowd
+    - loitering
+    - gathering
+
+  sait_codes:
+    - LOUD_NOISE
+    - SHOUTING
+    - CROWD_NOISE
+
+  polisen_types:
+    - Ordningsstörning
+    - Ofredande
+
+vandalism:
+  description: "Property damage or destruction"
+  severity_range: [2, 4]
+
+  halo_types:
+    - vandalism
+    - property_damage
+    - graffiti
+
+  frontline_objects:
+    - suspicious_activity
+    - property_damage
+
+  sait_codes:
+    - GLASS_BREAK
+    - IMPACT_SOUNDS
+    - SPRAY_PAINT
+
+  polisen_types:
+    - Skadegörelse
+    - Klotter
+
+drug_activity:
+  description: "Drug-related offenses"
+  severity_range: [2, 4]
+
+  halo_types:
+    - drug_possession
+    - drug_dealing
+    - drug_use
+
+  frontline_objects:
+    - suspicious_exchange
+    - loitering
+
+  sait_codes:
+    - SUSPICIOUS_EXCHANGE
+
+  polisen_types:
+    - Narkotikabrott
+
+vehicle_crime:
+  description: "Vehicle-related crimes"
+  severity_range: [2, 4]
+
+  halo_types:
+    - vehicle_theft
+    - vehicle_break_in
+    - hit_and_run
+
+  frontline_objects:
+    - car
+    - truck
+    - suspicious_vehicle
+
+  sait_codes:
+    - ALARM
+    - GLASS_BREAK
+    - ENGINE_SOUNDS
+
+  polisen_types:
+    - Tillgrepp av fortskaffningsmedel
+    - Trafikbrott
+
+suspicious_activity:
+  description: "Suspicious behavior requiring investigation"
+  severity_range: [1, 3]
+
+  halo_types:
+    - suspicious_person
+    - suspicious_package
+    - trespassing
+
+  frontline_objects:
+    - person
+    - loitering
+    - suspicious_behavior
+
+  sait_codes:
+    - SUSPICIOUS_SOUNDS
+
+  polisen_types:
+    - Misstänkt person
+    - Intrång
+
+# Severity Scale (1-5)
+severity_levels:
+  1:
+    label: "minimal"
+    description: "Minor incidents, no immediate danger"
+    response_priority: "low"
+
+  2:
+    label: "low"
+    description: "Property crimes, non-violent offenses"
+    response_priority: "standard"
+
+  3:
+    label: "moderate"
+    description: "Disturbances, minor violence"
+    response_priority: "elevated"
+
+  4:
+    label: "high"
+    description: "Violent crimes, weapons involved"
+    response_priority: "urgent"
+
+  5:
+    label: "critical"
+    description: "Active shooter, major violence, imminent danger"
+    response_priority: "immediate"
