@@ -138,43 +138,46 @@ async def reload_models(
         raise HTTPException(status_code=500, detail=f"Model reload failed: {str(e)}")
 
 
-@router.post("/start-collection", dependencies=[])
-@limiter.limit("10/hour")
-async def start_collection_service(
+@router.post("/collect-now", dependencies=[])
+@limiter.limit("20/hour")
+async def collect_now(
     request: Request,
     authorization: str = Header(None)
 ):
     """
-    Start data collection service
+    Trigger immediate data collection (one-time)
 
     Authentication: Bearer token in Authorization header
 
     Example:
-        curl -X POST https://loving-purpose-production.up.railway.app/api/v1/admin/start-collection \\
+        curl -X POST https://loving-purpose-production.up.railway.app/api/v1/admin/collect-now \\
           -H "Authorization: Bearer $ADMIN_TOKEN"
     """
     verify_admin(authorization)
 
     try:
-        from services.data_collector import start_data_collection
+        from services.data_collector import PolisenCollector
         from datetime import datetime
 
-        logger.info("🔄 Starting data collection service...")
+        logger.info("🔄 Running immediate data collection...")
 
-        # Start the collection service
-        await start_data_collection()
+        # Create collector and run once
+        collector = PolisenCollector()
+        result = await collector.collect()
 
-        logger.info("✅ Data collection service started successfully")
+        logger.info(f"✅ Collection completed: {result}")
 
         return {
-            "success": True,
-            "message": "Data collection service started successfully",
-            "started_at": datetime.utcnow().isoformat()
+            "success": result.get("success", False),
+            "records_collected": result.get("records", 0),
+            "message": f"Collected {result.get('records', 0)} incidents",
+            "completed_at": datetime.utcnow().isoformat(),
+            "details": result
         }
 
     except Exception as e:
-        logger.error(f"Failed to start collection service: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to start collection: {str(e)}")
+        logger.error(f"Collection failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Collection failed: {str(e)}")
 
 
 @router.post("/init-database", dependencies=[])
