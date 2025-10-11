@@ -12,6 +12,46 @@ from geoalchemy2 import Geography
 Base = declarative_base()
 
 
+class Incident(Base):
+    """Raw incident data collected from external sources (polisen.se, etc)"""
+    __tablename__ = 'incidents'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    # External source tracking
+    external_id = Column(String(200), nullable=False)
+    source = Column(String(50), nullable=False)
+
+    # Incident details
+    incident_type = Column(String(100), nullable=False)
+    summary = Column(Text)
+    location_name = Column(String(200))
+
+    # Geospatial
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    location = Column(Geography('POINT', srid=4326))
+
+    # Temporal
+    occurred_at = Column(DateTime, nullable=False)
+
+    # Additional data
+    url = Column(Text)
+    severity = Column(Integer, CheckConstraint('severity BETWEEN 1 AND 5'))
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint('external_id', 'source', name='uq_incident_external_id_source'),
+        Index('idx_incident_location', location, postgresql_using='gist'),
+        Index('idx_incident_occurred_at', 'occurred_at'),
+        Index('idx_incident_source', 'source'),
+        Index('idx_incident_severity', 'severity'),
+    )
+
+
 class ThreatIntelligence(Base):
     """Shared threat intelligence across all products"""
     __tablename__ = 'threat_intelligence'
