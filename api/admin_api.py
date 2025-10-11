@@ -180,19 +180,19 @@ async def collect_now(
         raise HTTPException(status_code=500, detail=f"Collection failed: {str(e)}")
 
 
-@router.post("/init-database", dependencies=[])
+@router.post("/reset-database", dependencies=[])
 @limiter.limit("5/hour")
-async def init_database(
+async def reset_database(
     request: Request,
     authorization: str = Header(None)
 ):
     """
-    Initialize database (create all tables)
+    Reset database (drop all tables and recreate)
 
     Authentication: Bearer token in Authorization header
 
     Example:
-        curl -X POST https://loving-purpose-production.up.railway.app/api/v1/admin/init-database \\
+        curl -X POST https://loving-purpose-production.up.railway.app/api/v1/admin/reset-database \\
           -H "Authorization: Bearer $ADMIN_TOKEN"
     """
     verify_admin(authorization)
@@ -202,28 +202,38 @@ async def init_database(
         from database.database import get_database
         from database.models import Base
 
-        logger.info("🔄 Initializing database schema...")
+        logger.info("🔄 Resetting database schema...")
 
         db = await get_database()
 
-        # Create all tables
+        # Drop and recreate all tables
         async with db.engine.begin() as conn:
-            # Enable PostGIS
-            await conn.execute(sa.text("CREATE EXTENSION IF NOT EXISTS postgis"))
+            # Drop all tables
+            logger.info("Dropping all tables...")
+            await conn.run_sync(Base.metadata.drop_all)
+
+            # Try to enable PostGIS (will fail gracefully if not available)
+            try:
+                await conn.execute(sa.text("CREATE EXTENSION IF NOT EXISTS postgis"))
+                logger.info("PostGIS enabled")
+            except Exception as e:
+                logger.warning(f"PostGIS not available: {e}")
+
             # Create all tables
+            logger.info("Creating all tables...")
             await conn.run_sync(Base.metadata.create_all)
 
-        logger.info("✅ Database initialized successfully")
+        logger.info("✅ Database reset successfully")
 
         return {
             "success": True,
-            "message": "Database initialized successfully",
+            "message": "Database reset successfully - all tables dropped and recreated",
             "completed_at": datetime.utcnow().isoformat()
         }
 
     except Exception as e:
-        logger.error(f"Database initialization failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Database initialization failed: {str(e)}")
+        logger.error(f"Database reset failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Database reset failed: {str(e)}")
 
 
 @router.get("/models/versions/{model_name}", dependencies=[])
