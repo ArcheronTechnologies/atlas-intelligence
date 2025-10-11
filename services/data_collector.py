@@ -9,6 +9,7 @@ import httpx
 from typing import Dict
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import insert
+from geoalchemy2.elements import WKTElement
 
 from database.database import get_database
 from database.models import Incident
@@ -69,6 +70,7 @@ class PolisenCollector:
                             "location_name": event.get("location", {}).get("name", ""),
                             "latitude": latitude,
                             "longitude": longitude,
+                            "location": WKTElement(f'POINT({longitude} {latitude})', srid=4326),
                             "occurred_at": occurred_at,
                             "url": event.get("url", ""),
                             "severity": self._estimate_severity(event.get("type", "")),
