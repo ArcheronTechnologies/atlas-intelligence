@@ -45,7 +45,7 @@ class Incident(Base):
 
     __table_args__ = (
         UniqueConstraint('external_id', 'source', name='uq_incident_external_id_source'),
-        Index('idx_incident_location', location, postgresql_using='gist'),
+        # Index('idx_incident_location', location, postgresql_using='gist'),  # Disabled: PostGIS not available
         Index('idx_incident_occurred_at', 'occurred_at'),
         Index('idx_incident_source', 'source'),
         Index('idx_incident_severity', 'severity'),
