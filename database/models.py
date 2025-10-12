@@ -7,7 +7,7 @@ from datetime import datetime
 from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, Text, Index, UniqueConstraint, CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.declarative import declarative_base
-from geoalchemy2 import Geography
+# from geoalchemy2 import Geography  # Disabled: PostGIS not available on Railway
 
 Base = declarative_base()
 
@@ -74,7 +74,9 @@ class ThreatIntelligence(Base):
     source_event_id = Column(UUID(as_uuid=True))
 
     # Spatial-temporal data
-    location = Column(Geography('POINT', srid=4326))
+    latitude = Column(Float)
+    longitude = Column(Float)
+    # location = Column(Geography('POINT', srid=4326))  # Disabled: PostGIS not available on Railway
     occurred_at = Column(DateTime, nullable=False)
 
     # Validation & learning
@@ -91,10 +93,11 @@ class ThreatIntelligence(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     __table_args__ = (
-        Index('idx_threat_location', location, postgresql_using='gist'),
+        # Index('idx_threat_location', location, postgresql_using='gist'),  # Disabled: PostGIS not available
         Index('idx_threat_time', 'occurred_at'),
         Index('idx_threat_category', 'threat_category'),
         Index('idx_threat_source', 'source_product'),
+        Index('idx_threat_lat_lon', 'latitude', 'longitude'),
     )
 
 
@@ -197,7 +200,9 @@ class IntelligencePattern(Base):
     cross_product_correlation = Column(Float)
 
     # Spatial-temporal scope
-    location_center = Column(Geography('POINT', srid=4326))
+    center_latitude = Column(Float)
+    center_longitude = Column(Float)
+    # location_center = Column(Geography('POINT', srid=4326))  # Disabled: PostGIS not available on Railway
     location_radius_meters = Column(Float)
     time_window_start = Column(DateTime)
     time_window_end = Column(DateTime)
@@ -212,6 +217,7 @@ class IntelligencePattern(Base):
     active = Column(Boolean, default=True)
 
     __table_args__ = (
-        Index('idx_pattern_location', location_center, postgresql_using='gist'),
+        # Index('idx_pattern_location', location_center, postgresql_using='gist'),  # Disabled: PostGIS not available
         Index('idx_pattern_time', 'time_window_start', 'time_window_end'),
+        Index('idx_pattern_lat_lon', 'center_latitude', 'center_longitude'),
     )

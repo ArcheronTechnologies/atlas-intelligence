@@ -8,7 +8,7 @@ Create Date: 2025-10-07
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
-import geoalchemy2
+# import geoalchemy2  # Disabled: PostGIS not available on Railway
 
 # revision identifiers, used by Alembic.
 revision = '001'
@@ -18,8 +18,8 @@ depends_on = None
 
 
 def upgrade():
-    # Enable PostGIS extension
-    op.execute('CREATE EXTENSION IF NOT EXISTS postgis')
+    # PostGIS not available on Railway - using lat/lon columns instead
+    # op.execute('CREATE EXTENSION IF NOT EXISTS postgis')
 
     # Create threat_intelligence table
     op.create_table(
@@ -34,7 +34,9 @@ def upgrade():
         sa.Column('sait_threat_code', sa.String(50)),
         sa.Column('source_product', sa.String(20), nullable=False),
         sa.Column('source_event_id', postgresql.UUID(as_uuid=True)),
-        sa.Column('location', geoalchemy2.Geography('POINT', srid=4326)),
+        sa.Column('latitude', sa.Float()),
+        sa.Column('longitude', sa.Float()),
+        # sa.Column('location', geoalchemy2.Geography('POINT', srid=4326)),  # Disabled: PostGIS not available
         sa.Column('occurred_at', sa.DateTime(), nullable=False),
         sa.Column('validated', sa.Boolean(), default=False),
         sa.Column('validation_source', sa.String(20)),
@@ -48,10 +50,11 @@ def upgrade():
     )
 
     # Create indexes for threat_intelligence
-    op.create_index('idx_threat_location', 'threat_intelligence', ['location'], postgresql_using='gist')
+    # op.create_index('idx_threat_location', 'threat_intelligence', ['location'], postgresql_using='gist')  # Disabled: PostGIS not available
     op.create_index('idx_threat_time', 'threat_intelligence', ['occurred_at'])
     op.create_index('idx_threat_category', 'threat_intelligence', ['threat_category'])
     op.create_index('idx_threat_source', 'threat_intelligence', ['source_product'])
+    op.create_index('idx_threat_lat_lon', 'threat_intelligence', ['latitude', 'longitude'])
 
     # Create model_registry table
     op.create_table(
@@ -116,7 +119,9 @@ def upgrade():
         sa.Column('frequency_trend', sa.String(20)),
         sa.Column('sources', postgresql.JSONB(), nullable=False),
         sa.Column('cross_product_correlation', sa.Float()),
-        sa.Column('location_center', geoalchemy2.Geography('POINT', srid=4326)),
+        sa.Column('center_latitude', sa.Float()),
+        sa.Column('center_longitude', sa.Float()),
+        # sa.Column('location_center', geoalchemy2.Geography('POINT', srid=4326)),  # Disabled: PostGIS not available
         sa.Column('location_radius_meters', sa.Float()),
         sa.Column('time_window_start', sa.DateTime()),
         sa.Column('time_window_end', sa.DateTime()),
@@ -127,8 +132,9 @@ def upgrade():
         sa.Column('active', sa.Boolean(), default=True),
     )
 
-    op.create_index('idx_pattern_location', 'intelligence_patterns', ['location_center'], postgresql_using='gist')
+    # op.create_index('idx_pattern_location', 'intelligence_patterns', ['location_center'], postgresql_using='gist')  # Disabled: PostGIS not available
     op.create_index('idx_pattern_time', 'intelligence_patterns', ['time_window_start', 'time_window_end'])
+    op.create_index('idx_pattern_lat_lon', 'intelligence_patterns', ['center_latitude', 'center_longitude'])
 
 
 def downgrade():
@@ -136,4 +142,4 @@ def downgrade():
     op.drop_table('training_samples')
     op.drop_table('model_registry')
     op.drop_table('threat_intelligence')
-    op.execute('DROP EXTENSION IF EXISTS postgis')
+    # op.execute('DROP EXTENSION IF EXISTS postgis')  # PostGIS not used

@@ -8,7 +8,7 @@ Create Date: 2025-10-11
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
-import geoalchemy2
+# import geoalchemy2  # Disabled: PostGIS not available on Railway
 
 # revision identifiers, used by Alembic.
 revision = '002'
@@ -29,7 +29,7 @@ def upgrade():
         sa.Column('location_name', sa.String(200)),
         sa.Column('latitude', sa.Float(), nullable=False),
         sa.Column('longitude', sa.Float(), nullable=False),
-        sa.Column('location', geoalchemy2.Geography('POINT', srid=4326)),
+        # sa.Column('location', geoalchemy2.Geography('POINT', srid=4326)),  # Disabled: PostGIS not available
         sa.Column('occurred_at', sa.DateTime(), nullable=False),
         sa.Column('url', sa.Text()),
         sa.Column('severity', sa.Integer()),
@@ -40,10 +40,11 @@ def upgrade():
     )
 
     # Create indexes for incidents
-    op.create_index('idx_incident_location', 'incidents', ['location'], postgresql_using='gist')
+    # op.create_index('idx_incident_location', 'incidents', ['location'], postgresql_using='gist')  # Disabled: PostGIS not available
     op.create_index('idx_incident_occurred_at', 'incidents', ['occurred_at'])
     op.create_index('idx_incident_source', 'incidents', ['source'])
     op.create_index('idx_incident_severity', 'incidents', ['severity'])
+    op.create_index('idx_incident_lat_lon', 'incidents', ['latitude', 'longitude'])
 
 
 def downgrade():

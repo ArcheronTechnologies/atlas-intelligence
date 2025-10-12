@@ -81,14 +81,17 @@ async def get_incidents(
         if min_severity:
             query = query.where(Incident.severity >= min_severity)
 
-        # Radius filter (PostGIS)
+        # Radius filter (using lat/lon distance calculation)
         if lat is not None and lon is not None and radius_km:
-            # ST_DWithin uses meters
+            # Simple bounding box filter - approximate but fast
+            # 1 degree latitude ≈ 111 km, longitude varies by latitude
+            lat_delta = radius_km / 111.0
+            lon_delta = radius_km / (111.0 * func.cos(func.radians(lat)))
+
             query = query.where(
-                func.ST_DWithin(
-                    Incident.location,
-                    func.ST_MakePoint(lon, lat),
-                    radius_km * 1000  # Convert km to meters
+                and_(
+                    Incident.latitude.between(lat - lat_delta, lat + lat_delta),
+                    Incident.longitude.between(lon - lon_delta, lon + lon_delta)
                 )
             )
 
