@@ -52,13 +52,13 @@ class PolisenCollector:
                                 latitude = float(gps_parts[0].strip())
                                 longitude = float(gps_parts[1].strip())
 
-                        # Parse datetime
+                        # Parse datetime (strip timezone to match database schema)
                         occurred_at = datetime.now()
                         if event.get("datetime"):
                             try:
                                 occurred_at = datetime.fromisoformat(
                                     event["datetime"].replace("Z", "+00:00")
-                                )
+                                ).replace(tzinfo=None)  # Remove timezone info
                             except:
                                 pass
 
