@@ -11,7 +11,7 @@ slowapi==0.1.9  # Rate limiting
 # Database
 asyncpg==0.29.0
 sqlalchemy==2.0.23
-geoalchemy2==0.14.2
+# geoalchemy2==0.14.2  # Disabled: PostGIS not available on Railway
 psycopg2-binary==2.9.10
 alembic==1.13.0
 
