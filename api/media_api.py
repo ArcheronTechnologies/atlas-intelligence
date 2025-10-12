@@ -101,7 +101,7 @@ async def analyze_media(
             )
 
         elif media_type == "video":
-            result = await analyzer.analyze_video(file_bytes)
+            result = await analyzer.analyze_video(file_bytes, keyframe_fps=1.0)
             return MediaAnalysisResponse(
                 success=True,
                 media_type="video",
